@@ -56,6 +56,11 @@ Handles Tally direct connections, Chroma DB populating, and WebSocket synchroniz
 cd extracting_tally_data
 uvicorn tally_api:app --host 0.0.0.0 --port 8000 --reload
 ```
+or
+```bash
+cd extracting_tally_data
+uvicorn tally_api:app --reload --port 8000
+```
 
 **Terminal C: Intelligence Layer (Port 8001)**  
 Handles NLP logic, TTS Audio blobs, Pydantic validations, and PDF/Matplotlib graphic builds.

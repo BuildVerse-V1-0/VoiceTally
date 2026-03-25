@@ -17,43 +17,100 @@ if (role === 'admin') {
     document.getElementById('userEmail').textContent = 'Standard User';
 }
 
-async function fetchHistory() {
-    console.log(`[Dashboard] Fetching user history...`);
-    try {
-        const res = await fetch('http://127.0.0.1:3000/api/user/history', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
+// Constants
+const viewTitles = {
+    viewOverview: 'Overview',
+    viewDataExplorer: 'Data Explorer',
+    viewHistory: 'Query History'
+};
 
+const chartDefinitions = [
+    { key: 'cash_bank', title: 'Cash & Bank', subtitle: 'Receipts vs payments', chip: 'Live' },
+    { key: 'profit_loss', title: 'Profit & Loss', subtitle: 'Sales vs purchases', chip: 'Monthly' },
+    { key: 'purchase_sales', title: 'Revenue Trend', subtitle: 'Time series movement', chip: 'Trend' },
+    { key: 'stock_value', title: 'Stock Value', subtitle: 'Top stock groups', chip: 'Inventory' },
+    { key: 'capital_assets', title: 'Capital & Assets', subtitle: 'Ledger composition', chip: 'Balance' },
+    { key: 'top_5_reports', title: 'Top 5 Receivables', subtitle: 'Highest customer volume', chip: 'Customers' },
+    { key: 'slow_items', title: 'Slow Moving Items', subtitle: 'Inventory risk signal', chip: 'Alerts' },
+    { key: 'overdue_bills', title: 'Bills Aging', subtitle: 'Overdue buckets', chip: 'Aging' }
+];
+
+const navItems = document.querySelectorAll('.nav-item[data-view]');
+const viewSections = document.querySelectorAll('.view-section');
+const viewTitle = document.getElementById('viewTitle');
+const sidebarToggle = document.getElementById('sidebarToggle');
+
+function setView(targetView) {
+    navItems.forEach(n => n.classList.remove('active'));
+    const activeItem = document.querySelector(`.nav-item[data-view="${targetView}"]`);
+    if (activeItem) activeItem.classList.add('active');
+
+    viewSections.forEach(v => v.classList.remove('active'));
+    const targetEl = document.getElementById(targetView);
+    if (targetEl) targetEl.classList.add('active');
+
+    if (viewTitle) viewTitle.textContent = viewTitles[targetView] || 'Dashboard';
+}
+
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const targetView = item.getAttribute('data-view');
+        setView(targetView);
+    });
+});
+
+if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) sidebar.classList.toggle('collapsed');
+        document.body.classList.toggle('sidebar-collapsed');
+    });
+}
+
+function fetchHistory() {
+    console.log(`[Dashboard] Fetching user history...`);
+    fetch('http://127.0.0.1:3000/api/user/history', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    }).then(res => res.json().then(data => ({res, data})))
+    .then(({res, data}) => {
         if (!res.ok) {
             console.warn(`[Dashboard] Failed to fetch history: ${data.error}`);
             if (res.status === 401 || res.status === 403) logout(); // Token expired or invalid
-            document.getElementById('historyList').innerHTML = `<span style="color:var(--error)">${data.error || 'Failed to load history.'}</span>`;
+            document.getElementById('historyList').innerHTML = `<tr><td colspan="3" style="color:var(--danger)">${data.error || 'Failed to load history.'}</td></tr>`;
             return;
         }
 
         console.log(`[Dashboard] History fetched successfully.`, data);
 
         if (data.history && data.history.length > 0) {
-            let html = '<table style="width:100%; text-align:left; border-collapse:collapse; font-size:14px;">';
-            html += '<tr style="border-bottom: 1px solid var(--border);"><th style="padding:8px">Time</th><th style="padding:8px">Action</th><th style="padding:8px">Status</th></tr>';
+            let html = '';
             data.history.forEach(log => {
+                const isWarning = (log.status || '').toLowerCase() === 'blocked' || (log.status || '').toLowerCase() === 'error';
+                const statusClass = isWarning ? 'badge-warning' : 'badge-success';
                 html += `<tr>
-                    <td style="padding:8px">${new Date(log.time).toLocaleString()}</td>
-                    <td style="padding:8px">${log.action}</td>
-                    <td style="padding:8px">${log.status}</td>
+                    <td><span class="muted" style="font-size:13px;">${new Date(log.time).toLocaleString()}</span></td>
+                    <td>${escapeHtml(log.action)}</td>
+                    <td><span class="badge ${statusClass}">${escapeHtml(log.status)}</span></td>
                 </tr>`;
             });
-            html += '</table>';
             document.getElementById('historyList').innerHTML = html;
         } else {
-            console.log(`[Dashboard] History is empty.`);
-            document.getElementById('historyList').textContent = 'No recent history found.';
+            document.getElementById('historyList').innerHTML = '<tr><td colspan="3" class="muted">No recent history found.</td></tr>';
         }
-    } catch (err) {
+    })
+    .catch(err => {
         console.error(`[Dashboard] Error fetching history:`, err);
-        document.getElementById('historyList').innerHTML = `<span style="color:var(--error)">Backend connection error.</span>`;
-    }
+        document.getElementById('historyList').innerHTML = `<tr><td colspan="3" style="color:var(--danger)">Backend connection error.</td></tr>`;
+    });
+}
+
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 fetchHistory();
@@ -138,6 +195,50 @@ if (currentTheme === 'dark') {
 // ============================================================
 // DASHBOARD VISUALS (Pandas + Matplotlib Base64 Graphs)
 // ============================================================
+
+function renderChartSkeletons() {
+    const chartsContainer = document.getElementById('chartsContainer');
+    if (!chartsContainer) return;
+    chartsContainer.innerHTML = chartDefinitions.map(def => `
+        <div class="chart-card" data-chart-key="${def.key}">
+            <div class="chart-card-header">
+                <div>
+                    <div class="chart-title">${escapeHtml(def.title)}</div>
+                    <div class="chart-subtitle">${escapeHtml(def.subtitle)}</div>
+                </div>
+                <span class="chip">${escapeHtml(def.chip)}</span>
+            </div>
+            <div class="chart-body">
+                <div class="chart-skeleton"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderCharts(charts) {
+    const chartsContainer = document.getElementById('chartsContainer');
+    if (!chartsContainer) return;
+    chartsContainer.innerHTML = chartDefinitions.map(def => {
+        const img = charts?.[def.key];
+        const body = img
+            ? `<div class="chart-body"><img src="${img}" alt="${escapeHtml(def.title)} chart" loading="lazy" /></div>`
+            : `<div class="chart-body"><div class="empty-state">Data unavailable for this chart.</div></div>`;
+
+        return `
+            <div class="chart-card" data-chart-key="${def.key}">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-title">${escapeHtml(def.title)}</div>
+                        <div class="chart-subtitle">${escapeHtml(def.subtitle)}</div>
+                    </div>
+                    <span class="chip">${escapeHtml(def.chip)}</span>
+                </div>
+                ${body}
+            </div>
+        `;
+    }).join('');
+}
+
 async function fetchDashboardVisuals() {
     const chartsContainer = document.getElementById('chartsContainer');
     if (!chartsContainer) return;
@@ -146,6 +247,8 @@ async function fetchDashboardVisuals() {
     const theme = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
     console.info(`[Dashboard] Fetching graphical insights from ${intellUrl}/dashboard/visuals?theme=${theme}`);
 
+    renderChartSkeletons();
+
     try {
         const res = await fetch(`${intellUrl}/dashboard/visuals?theme=${theme}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -153,35 +256,27 @@ async function fetchDashboardVisuals() {
         const data = await res.json();
         
         if (data.status === 'success' && data.charts) {
-            // Map the 8 chart keys to the grid
-            const chartMapping = [
-                data.charts.cash_bank,
-                data.charts.profit_loss,
-                data.charts.purchase_sales,
-                data.charts.stock_value,
-                data.charts.capital_assets,
-                data.charts.top_5_reports,
-                data.charts.slow_items,
-                data.charts.overdue_bills
-            ];
-
-            chartsContainer.innerHTML = ''; // Clear skeletons
-            chartMapping.forEach(base64Str => {
-                const card = document.createElement('div');
-                card.className = 'chart-card';
-                if (base64Str) {
-                    const img = document.createElement('img');
-                    img.src = base64Str;
-                    card.appendChild(img);
-                } else {
-                    card.innerHTML = '<span style="color:var(--text-muted)">Data Unavailable</span>';
-                }
-                chartsContainer.appendChild(card);
-            });
+            renderCharts(data.charts);
         }
     } catch (err) {
         console.error(`[Dashboard] Failed to fetch visuals:`, err);
-        chartsContainer.innerHTML = `<div style="grid-column: 1 / -1; color: var(--danger); text-align: center;">Failed to load financial insights from Intelligence API. Verify it is running at ${intellUrl}</div>`;
+        chartsContainer.innerHTML = `
+            <div class="chart-card" style="grid-column: 1 / -1;">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-title">Dashboard load failed</div>
+                        <div class="chart-subtitle">The Intelligence API could not be reached.</div>
+                    </div>
+                    <span class="chip">Error</span>
+                </div>
+                <div class="chart-body">
+                    <div class="empty-state">
+                        Failed to load financial insights from Intelligence API.
+                        <div style="margin-top:8px;" class="mini-note">${escapeHtml(intellUrl)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }
 

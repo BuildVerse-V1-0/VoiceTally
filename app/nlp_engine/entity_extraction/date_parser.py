@@ -1,25 +1,18 @@
-from datetime import date, timedelta
+# app/nlp_engine/entity_extraction/date_parser.py
 
+def parse_date(query: str):
+    query = query.lower()
 
-def extract_date_range(text: str):
-    text = text.lower()
-    today = date.today()
+    if "last year" in query:
+        return "last_year"
 
-    if "today" in text:
-        return today, today
+    if "last month" in query:
+        return "last_month"
 
-    if "yesterday" in text:
-        y = today - timedelta(days=1)
-        return y, y
+    if "last 3 months" in query:
+        return "last_3_months"
 
-    if "last week" in text:
-        start = today - timedelta(days=7)
-        end = today
-        return start, end
+    if "march" in query:
+        return "march"
 
-    if "this week" in text:
-        start = today - timedelta(days=today.weekday())
-        end = today
-        return start, end
-
-    return None, None
+    return None

@@ -1,20 +1,49 @@
-from app.nlp_engine.intent_classifier.rule_based import classify_intent
-from app.nlp_engine.intent_classifier.llm_based import classify_intent_with_llm
+# app/nlp_engine/intent_classifier/classifier.py
+
+from .rule_based import classify as rule_based_classify
+
+import openai
 
 
-def get_intent(text: str) -> str | None:
-    """
-    Determines intent using rule-based logic first,
-    then LLM fallback if necessary.
-    """
-
-    intent = classify_intent(text)
-
-    if intent:
-        return intent
-
-    # Fallback to LLM (if implemented & configured)
+def llm_parse_intent(query: str):
     try:
-        return classify_intent_with_llm(text)
-    except Exception:
+        prompt = f"""
+        Convert this business query into structured JSON.
+
+        Query: "{query}"
+
+        Output:
+        {{
+          "intent": "...",
+          "metrics": [],
+          "dimensions": [],
+          "time_range": "",
+          "comparison": "",
+          "aggregation": ""
+        }}
+        """
+
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        return eval(response['choices'][0]['message']['content'])
+
+    except Exception as e:
+        print("LLM failed:", e)
         return None
+
+
+def classify(query: str):
+
+    # Step 1: Rule-based
+    result = rule_based_classify(query)
+
+    # Step 2: LLM fallback
+    if result == "unknown" or not result:
+        llm_result = llm_parse_intent(query)
+        if llm_result:
+            return llm_result
+
+    return result

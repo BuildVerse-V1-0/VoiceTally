@@ -1,26 +1,47 @@
 # app/nlp_engine/intent_classifier/rule_based.py
 
 def classify(query: str):
+
     query = query.lower()
 
-    if "total" in query or "sum" in query:
+    # -------------------------------
+    # AGGREGATION (MOST COMMON)
+    # -------------------------------
+    if any(word in query for word in [
+        "total", "sum", "sales", "revenue", "income"
+    ]):
         return "sum"
 
-    if "average" in query or "avg" in query:
+    # -------------------------------
+    # AVERAGE
+    # -------------------------------
+    if any(word in query for word in [
+        "average", "avg", "mean"
+    ]):
         return "average"
 
-    if "count" in query:
+    # -------------------------------
+    # COUNT
+    # -------------------------------
+    if any(word in query for word in [
+        "count", "how many", "number of"
+    ]):
         return "count"
 
-    if "compare" in query or "vs" in query:
-        return {
-            "intent": "comparison",
-            "comparison": "previous_period"
-        }
+    # -------------------------------
+    # COMPARISON
+    # -------------------------------
+    if any(word in query for word in [
+        "compare", "vs", "versus", "difference"
+    ]):
+        return {"intent": "comparison"}
 
-    if "why" in query or "reason" in query:
-        return {
-            "intent": "diagnostic"
-        }
+    # -------------------------------
+    # INSIGHT / WHY
+    # -------------------------------
+    if any(word in query for word in [
+        "why", "reason", "cause", "drop", "increase"
+    ]):
+        return {"intent": "diagnostic"}
 
-    return "unknown"
+    return "sum"  # 🔥 DEFAULT (IMPORTANT)

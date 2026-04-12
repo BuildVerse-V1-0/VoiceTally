@@ -2,26 +2,22 @@
 
 def generate_response(query, structured, data):
 
-    metric = structured.get("metric", ["data"])[0] if structured.get("metric") else "data"
+    metric = structured.get("metric", ["sales"])[0]
 
     if structured["type"] == "aggregation":
-        value = data.get("value", 0)
-        return f"Your total {metric} is ₹{value}."
+        return f"Your total {metric} is ₹{data.get('value', 0)}."
 
     if structured["type"] == "comparison":
-        current = data.get("current", 0)
-        previous = data.get("previous", 0)
-        growth = data.get("growth", "0%")
-
         return (
-            f"Your {metric} is ₹{current}, compared to ₹{previous} earlier. "
-            f"This shows a growth of {growth}."
+            f"Current: ₹{data.get('current', 0)}, "
+            f"Previous: ₹{data.get('previous', 0)}, "
+            f"Growth: {data.get('growth', '0%')}."
         )
 
     if structured["type"] == "insight":
-        trend = data.get("trend", "stable")
-        reason = data.get("reason", "no major changes")
+        return (
+            f"Trend: {data.get('trend', 'stable')}. "
+            f"Reason: {data.get('reason', 'no major change')}."
+        )
 
-        return f"Your {metric} shows a {trend}. This is likely due to {reason}."
-
-    return "I processed your request, but couldn’t generate a clear insight."
+    return "Query processed."

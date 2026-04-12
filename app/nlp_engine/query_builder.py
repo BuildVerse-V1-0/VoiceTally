@@ -8,14 +8,10 @@ from app.nlp_engine.executor import execute_query
 from app.nlp_engine.response_generator import generate_response
 
 
-# ----------------------------------------
-# BUILD FUNCTIONS
-# ----------------------------------------
-
 def build_aggregation_query(intent_data, entities):
     return {
         "type": "aggregation",
-        "metric": entities.get("metrics", []),
+        "metric": entities.get("metrics", ["sales"]),
         "time": entities.get("time")
     }
 
@@ -23,7 +19,7 @@ def build_aggregation_query(intent_data, entities):
 def build_comparison_query(intent_data, entities, plan):
     return {
         "type": "comparison",
-        "metric": entities.get("metrics", []),
+        "metric": entities.get("metrics", ["sales"]),
         "time": entities.get("time"),
         "plan": plan
     }
@@ -32,15 +28,11 @@ def build_comparison_query(intent_data, entities, plan):
 def build_insight_query(intent_data, entities, plan):
     return {
         "type": "insight",
-        "metric": entities.get("metrics", []),
+        "metric": entities.get("metrics", ["sales"]),
         "time": entities.get("time"),
         "plan": plan
     }
 
-
-# ----------------------------------------
-# MAIN FUNCTION
-# ----------------------------------------
 
 def process_query(query: str):
 
@@ -70,8 +62,8 @@ def process_query(query: str):
         response = generate_response(query, structured, data)
 
         return {
-            "response": response,
-            "data": data,
+            "response": response if response else "No response generated",
+            "data": data if data else {},
             "structured": structured
         }
 

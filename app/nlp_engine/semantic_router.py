@@ -1,18 +1,21 @@
-# nlp_engine/semantic_router.py
+# app/nlp_engine/semantic_router.py
 
 def route_query(intent_data):
 
+    # If dict intent
     if isinstance(intent_data, dict):
 
         intent = intent_data.get("intent")
 
-        if intent in ["sum", "average", "count"]:
-            return "aggregation"
-
-        elif intent == "comparison":
+        if intent == "comparison":
             return "comparison"
 
-        elif intent == "diagnostic":
+        if intent == "diagnostic":
             return "insights"
 
-    return "fallback"
+    # If string intent
+    if intent_data in ["sum", "average", "count"]:
+        return "aggregation"
+
+    # 🔥 DEFAULT → aggregation (VERY IMPORTANT)
+    return "aggregation"

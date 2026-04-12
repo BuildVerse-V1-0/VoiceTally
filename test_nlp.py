@@ -15,7 +15,7 @@ def main():
         result = process_query(user_input)
 
         print("\n🤖 VoiceTally:")
-        print(result.get("response", "No response generated."))
+        print(result.get("response", "No response"))
         print("\n" + "-"*50)
 
 

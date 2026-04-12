@@ -4,44 +4,35 @@ def classify(query: str):
 
     query = query.lower()
 
-    # -------------------------------
-    # AGGREGATION (MOST COMMON)
-    # -------------------------------
+    # Aggregation (default behavior)
     if any(word in query for word in [
         "total", "sum", "sales", "revenue", "income"
     ]):
         return "sum"
 
-    # -------------------------------
-    # AVERAGE
-    # -------------------------------
+    # Average
     if any(word in query for word in [
         "average", "avg", "mean"
     ]):
         return "average"
 
-    # -------------------------------
-    # COUNT
-    # -------------------------------
+    # Count
     if any(word in query for word in [
         "count", "how many", "number of"
     ]):
         return "count"
 
-    # -------------------------------
-    # COMPARISON
-    # -------------------------------
+    # Comparison
     if any(word in query for word in [
         "compare", "vs", "versus", "difference"
     ]):
         return {"intent": "comparison"}
 
-    # -------------------------------
-    # INSIGHT / WHY
-    # -------------------------------
+    # Insight
     if any(word in query for word in [
         "why", "reason", "cause", "drop", "increase"
     ]):
         return {"intent": "diagnostic"}
 
-    return "sum"  # 🔥 DEFAULT (IMPORTANT)
+    # 🔥 Default (VERY IMPORTANT)
+    return "sum"

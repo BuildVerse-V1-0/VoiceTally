@@ -13,9 +13,9 @@ def extract_entities(query):
     }
 
     try:
-        business_data = extract_business_entities(query)
-        if business_data:
-            entities.update(business_data)
+        data = extract_business_entities(query)
+        if data:
+            entities.update(data)
     except:
         pass
 

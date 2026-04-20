@@ -4,35 +4,28 @@ def classify(query: str):
 
     query = query.lower()
 
-    # Aggregation (default behavior)
+    # Greeting
+    if any(word in query for word in ["hi", "hello", "hey"]):
+        return "greeting"
+
+    # 🔥 FORECAST / FUTURE
     if any(word in query for word in [
-        "total", "sum", "sales", "revenue", "income"
+        "forecast", "project", "future", "next", "upcoming"
+    ]):
+        return {"intent": "forecast"}
+
+    # Aggregation
+    if any(word in query for word in [
+        "sales", "revenue", "income", "earn", "performance"
     ]):
         return "sum"
 
-    # Average
-    if any(word in query for word in [
-        "average", "avg", "mean"
-    ]):
-        return "average"
-
-    # Count
-    if any(word in query for word in [
-        "count", "how many", "number of"
-    ]):
-        return "count"
-
     # Comparison
-    if any(word in query for word in [
-        "compare", "vs", "versus", "difference"
-    ]):
+    if any(word in query for word in ["compare", "vs", "difference"]):
         return {"intent": "comparison"}
 
     # Insight
-    if any(word in query for word in [
-        "why", "reason", "cause", "drop", "increase"
-    ]):
+    if any(word in query for word in ["why", "reason", "drop", "increase"]):
         return {"intent": "diagnostic"}
 
-    # 🔥 Default (VERY IMPORTANT)
-    return "sum"
+    return "unknown"

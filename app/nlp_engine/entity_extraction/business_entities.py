@@ -1,47 +1,26 @@
-import re
+# app/nlp_engine/entity_extraction/business_entities.py
 
+def extract_business_entities(query):
 
-BUSINESS_KEYWORDS = {
-    "customer": [
-        "customer",
-        "client",
-        "party",
-        "buyer"
-    ],
-    "product": [
-        "product",
-        "item",
-        "stock",
-        "goods"
-    ],
-    "payment": [
-        "payment",
-        "due",
-        "outstanding",
-        "pending"
-    ],
-    "purchase": [
-        "purchase",
-        "bought",
-        "expense",
-        "procurement"
-    ]
-}
+    query = query.lower()
 
+    entities = {
+        "metrics": [],
+        "filters": {}
+    }
 
-def extract_business_entities(text: str) -> dict:
-    """
-    Extracts high-level business entities from user query.
-    Returns flags / labels, not actual DB values.
-    """
+    # 🔥 METRIC DETECTION
+    if "sales" in query:
+        entities["metrics"].append("sales")
 
-    entities = {}
-    text = text.lower()
+    if "revenue" in query:
+        entities["metrics"].append("revenue")
 
-    for entity_type, keywords in BUSINESS_KEYWORDS.items():
-        for keyword in keywords:
-            if re.search(rf"\b{keyword}\b", text):
-                entities[entity_type] = True
-                break
+    if "profit" in query:
+        entities["metrics"].append("profit")
+
+    # 🔥 PERFORMANCE → MAP TO SALES (SMART DEFAULT)
+    if "performance" in query and not entities["metrics"]:
+        entities["metrics"].append("sales")
 
     return entities

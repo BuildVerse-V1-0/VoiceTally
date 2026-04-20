@@ -3,21 +3,22 @@
 def generate_response(query, structured, data):
 
     metric = structured.get("metric", ["sales"])[0]
+    time = structured.get("time", "")
+
+    time_text = ""
+    if time:
+        time_text = f" for {time.replace('_', ' ')}"
 
     if structured["type"] == "aggregation":
-        return f"Your total {metric} is ₹{data.get('value', 0)}."
+        return f"Your total {metric}{time_text} is ₹{data.get('value', 0)}."
 
     if structured["type"] == "comparison":
         return (
-            f"Current: ₹{data.get('current', 0)}, "
-            f"Previous: ₹{data.get('previous', 0)}, "
-            f"Growth: {data.get('growth', '0%')}."
+            f"Your {metric}{time_text} is ₹{data.get('current')}, "
+            f"previously ₹{data.get('previous')}, showing {data.get('growth')} growth."
         )
 
     if structured["type"] == "insight":
-        return (
-            f"Trend: {data.get('trend', 'stable')}. "
-            f"Reason: {data.get('reason', 'no major change')}."
-        )
+        return f"Your {metric} shows a {data.get('trend')} due to {data.get('reason')}."
 
-    return "Query processed."
+    return "Done."
